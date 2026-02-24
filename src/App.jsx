@@ -4,7 +4,7 @@ import {
   ArrowUpRight, ArrowDownRight, Settings, LogOut, Bell, Search, 
   ChevronRight, Sparkles, MessageSquare, Send, Loader2, BrainCircuit,
   Eye, EyeOff, Euro, DollarSign, RefreshCw, Filter, Percent, AlertTriangle,
-  TrendingUp, PieChart
+  TrendingUp, PieChart, Landmark, Smartphone, CheckCircle2, Link2, X
 } from 'lucide-react';
 
 // ============================================================================
@@ -111,6 +111,16 @@ export default function App() {
   const [inputMessage, setInputMessage] = useState("");
   const chatEndRef = useRef(null);
 
+  // Intégrations States (Mock)
+  const [integrations, setIntegrations] = useState({
+    binance: true,
+    plaid: false,
+    tradeRepublic: false,
+  });
+  const [showTRModal, setShowTRModal] = useState(false);
+  const [trToken, setTrToken] = useState('');
+  const [isConnectingTR, setIsConnectingTR] = useState(false);
+
   // --- MOCK DATA ÉTENDUE ---
   const mockAssets = useMemo(() => [
     { id: '1', name: 'Résidence Principale (Paris)', category: 'RealEstate', value: 850000, isPrimaryResidence: true, strategy: 'Bon père de famille' },
@@ -163,6 +173,23 @@ export default function App() {
   // Projection des frais (TER) sur 20 ans
   const annualFees = filteredAssets.reduce((sum, a) => sum + (a.value * (a.ter || 0)), 0);
   const projectedFees20y = annualFees * 20 * 1.5; // Simplification (intérêts composés sur manque à gagner)
+
+  // Handlers pour les paramètres
+  const handleConnectTradeRepublic = (e) => {
+    e.preventDefault();
+    setIsConnectingTR(true);
+    // Simulation d'un appel API pour vérifier le token
+    setTimeout(() => {
+      setIsConnectingTR(false);
+      setIntegrations(prev => ({ ...prev, tradeRepublic: true }));
+      setShowTRModal(false);
+      setTrToken('');
+    }, 1500);
+  };
+
+  const handleDisconnectTradeRepublic = () => {
+    setIntegrations(prev => ({ ...prev, tradeRepublic: false }));
+  };
 
   // ============================================================================
   // RENDUS DES ONGLETS (TABS)
@@ -366,6 +393,149 @@ export default function App() {
     </div>
   );
 
+  const renderSettings = () => (
+    <div className="space-y-6 animate-in fade-in duration-500">
+      <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-8 backdrop-blur-2xl">
+        <h2 className="text-xl font-medium text-white mb-2">Comptes & Intégrations</h2>
+        <p className="text-sm text-slate-400 mb-8">Connectez vos courtiers et portefeuilles pour une synchronisation automatique de vos actifs via l'API (Lecture seule).</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          
+          {/* Card Trade Republic */}
+          <div className={`p-6 rounded-2xl border flex flex-col justify-between transition-all duration-300 ${integrations.tradeRepublic ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-white/10 bg-white/5 hover:border-[#D4AF37]/50'}`}>
+            <div>
+              <div className="flex justify-between items-start mb-4">
+                <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center">
+                   {/* Logo Placeholder pour Trade Republic */}
+                   <span className="font-bold text-black text-xl">TR</span>
+                </div>
+                {integrations.tradeRepublic && (
+                  <span className="flex items-center gap-1 text-xs text-emerald-400 font-medium bg-emerald-500/10 px-2 py-1 rounded-md">
+                    <CheckCircle2 size={14} /> Connecté
+                  </span>
+                )}
+              </div>
+              <h3 className="text-lg font-medium text-white mb-1">Trade Republic</h3>
+              <p className="text-xs text-slate-400 mb-6">Actions, ETF, Crypto</p>
+            </div>
+            
+            {integrations.tradeRepublic ? (
+              <button 
+                onClick={handleDisconnectTradeRepublic}
+                className="w-full py-2.5 rounded-xl border border-rose-500/30 text-rose-400 text-sm font-medium hover:bg-rose-500/10 transition-colors"
+              >
+                Déconnecter
+              </button>
+            ) : (
+              <button 
+                onClick={() => setShowTRModal(true)}
+                className="w-full py-2.5 rounded-xl bg-white/10 text-white text-sm font-medium hover:bg-[#D4AF37] hover:text-black transition-all flex items-center justify-center gap-2"
+              >
+                <Link2 size={16} /> Lier le compte
+              </button>
+            )}
+          </div>
+
+          {/* Card Binance (Exemple d'une intégration déjà active) */}
+          <div className={`p-6 rounded-2xl border flex flex-col justify-between transition-all duration-300 ${integrations.binance ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-white/10 bg-white/5'}`}>
+            <div>
+              <div className="flex justify-between items-start mb-4">
+                <div className="w-12 h-12 rounded-xl bg-[#FCD535] flex items-center justify-center">
+                   <Bitcoin size={28} className="text-black" />
+                </div>
+                {integrations.binance && (
+                  <span className="flex items-center gap-1 text-xs text-emerald-400 font-medium bg-emerald-500/10 px-2 py-1 rounded-md">
+                    <CheckCircle2 size={14} /> Connecté
+                  </span>
+                )}
+              </div>
+              <h3 className="text-lg font-medium text-white mb-1">Binance</h3>
+              <p className="text-xs text-slate-400 mb-6">Exchange Web3</p>
+            </div>
+            <button 
+              onClick={() => setIntegrations(prev => ({ ...prev, binance: false }))}
+              className="w-full py-2.5 rounded-xl border border-rose-500/30 text-rose-400 text-sm font-medium hover:bg-rose-500/10 transition-colors"
+            >
+              Déconnecter
+            </button>
+          </div>
+
+          {/* Card Banque Traditionnelle (Ex: Plaid) */}
+          <div className="p-6 rounded-2xl border border-white/10 bg-white/5 hover:border-[#D4AF37]/50 flex flex-col justify-between transition-all duration-300">
+            <div>
+              <div className="flex justify-between items-start mb-4">
+                <div className="w-12 h-12 rounded-xl bg-blue-600 flex items-center justify-center">
+                   <Landmark size={24} className="text-white" />
+                </div>
+              </div>
+              <h3 className="text-lg font-medium text-white mb-1">Banques & Open Banking</h3>
+              <p className="text-xs text-slate-400 mb-6">Plaid / Bridge / Powens</p>
+            </div>
+            <button className="w-full py-2.5 rounded-xl bg-white/10 text-white text-sm font-medium hover:bg-[#D4AF37] hover:text-black transition-all flex items-center justify-center gap-2">
+              <Link2 size={16} /> Lier le compte
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      {/* Modal Trade Republic */}
+      {showTRModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+          <div className="bg-[#0A1121] border border-[#D4AF37]/30 rounded-3xl p-8 max-w-md w-full shadow-2xl relative">
+            <button 
+              onClick={() => setShowTRModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+            >
+              <X size={20} />
+            </button>
+            
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center shrink-0">
+                <span className="font-bold text-black text-xl">TR</span>
+              </div>
+              <div>
+                <h3 className="text-xl font-medium text-white">Connexion Trade Republic</h3>
+                <p className="text-xs text-slate-400">Synchronisation sécurisée en lecture seule</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleConnectTradeRepublic} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Token d'accès API (Session ID)</label>
+                <input 
+                  type="text" 
+                  value={trToken}
+                  onChange={(e) => setTrToken(e.target.value)}
+                  placeholder="Ex: eyJhbGciOiJIUzI1NiIsInR5cCI6..." 
+                  className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:ring-1 focus:ring-[#D4AF37] text-white font-mono placeholder:text-slate-600 transition-all"
+                  required
+                />
+                <p className="text-[10px] text-slate-500 mt-2">
+                  Trade Republic n'offre pas d'API publique officielle. Vous devez récupérer votre token de session depuis les requêtes réseau de l'application web.
+                </p>
+              </div>
+
+              <div className="pt-4">
+                <button 
+                  type="submit" 
+                  disabled={isConnectingTR || !trToken}
+                  className="w-full py-3 rounded-xl bg-[#D4AF37] text-black font-bold text-sm hover:shadow-[0_0_15px_rgba(212,175,55,0.4)] transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isConnectingTR ? (
+                    <><Loader2 size={18} className="animate-spin" /> Connexion en cours...</>
+                  ) : (
+                    <><CheckCircle2 size={18} /> Autoriser l'accès</>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-[#030B17] text-slate-100 font-sans overflow-hidden flex selection:bg-[#D4AF37] selection:text-[#030B17]">
       {/* Arrière-plan animé Liquid Glass */}
@@ -430,30 +600,56 @@ export default function App() {
             </select>
           </div>
         </div>
+
+        {/* Boutons du bas */}
+        <div className="space-y-2 pt-4 border-t border-white/10">
+          <button 
+            onClick={() => setActiveTab('settings')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${
+              activeTab === 'settings' 
+                ? 'bg-blue-900/30 text-[#D4AF37] border border-[#D4AF37]/30 shadow-inner' 
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Settings size={18} />
+            <span className="font-medium text-sm">Paramètres</span>
+          </button>
+          <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-red-400 hover:bg-red-500/10 transition-all">
+            <LogOut size={18} />
+            <span className="font-medium text-sm">Déconnexion</span>
+          </button>
+        </div>
       </aside>
 
       {/* Main Content Area */}
       <main className="relative z-10 flex-1 h-screen overflow-y-auto p-6 lg:p-10 scroll-smooth">
-        {/* Header avec Filtre de Stratégie */}
+        {/* Header avec Filtre de Stratégie (Sauf dans Paramètres) */}
         <header className="flex justify-between items-center mb-10 pb-6 border-b border-white/5">
           <div className="flex items-center gap-4">
             <h1 className="text-2xl font-light text-white capitalize">
-              {activeTab === 'dashboard' ? 'Vue Globale' : activeTab === 'assets' ? 'Mes Actifs' : 'Performances'}
+              {activeTab === 'dashboard' ? 'Vue Globale' : 
+               activeTab === 'assets' ? 'Mes Actifs' : 
+               activeTab === 'perf' ? 'Performances' : 'Paramètres'}
             </h1>
-            <div className="h-6 w-px bg-white/20 mx-2"></div>
-            <div className="flex items-center gap-2 bg-white/[0.03] border border-white/10 rounded-full px-3 py-1.5 backdrop-blur-md">
-              <Filter size={14} className="text-slate-400" />
-              <select 
-                value={activeStrategy}
-                onChange={(e) => setActiveStrategy(e.target.value)}
-                className="bg-transparent text-sm text-slate-200 focus:outline-none appearance-none cursor-pointer pr-4"
-              >
-                <option value="Toutes">Toutes les poches</option>
-                <option value="Bon père de famille">Poche 'Bon père de famille'</option>
-                <option value="Retraite">Poche 'Retraite'</option>
-                <option value="Degen">Poche 'Degen' (Crypto/DeFi)</option>
-              </select>
-            </div>
+            
+            {activeTab !== 'settings' && (
+              <>
+                <div className="h-6 w-px bg-white/20 mx-2"></div>
+                <div className="flex items-center gap-2 bg-white/[0.03] border border-white/10 rounded-full px-3 py-1.5 backdrop-blur-md">
+                  <Filter size={14} className="text-slate-400" />
+                  <select 
+                    value={activeStrategy}
+                    onChange={(e) => setActiveStrategy(e.target.value)}
+                    className="bg-transparent text-sm text-slate-200 focus:outline-none appearance-none cursor-pointer pr-4"
+                  >
+                    <option value="Toutes">Toutes les poches</option>
+                    <option value="Bon père de famille">Poche 'Bon père de famille'</option>
+                    <option value="Retraite">Poche 'Retraite'</option>
+                    <option value="Degen">Poche 'Degen' (Crypto/DeFi)</option>
+                  </select>
+                </div>
+              </>
+            )}
           </div>
           
           <div className="flex items-center gap-4">
@@ -470,6 +666,7 @@ export default function App() {
           {activeTab === 'dashboard' && renderDashboard()}
           {activeTab === 'assets' && renderAssets()}
           {activeTab === 'perf' && renderPerformance()}
+          {activeTab === 'settings' && renderSettings()}
         </div>
       </main>
     </div>
